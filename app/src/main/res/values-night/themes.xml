@@ -1,0 +1,38 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.MyBiz" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your dark theme here. -->
+        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <item name="fontFamily">@font/sarala_regular</item>
+        <item name="android:navigationBarColor">@color/bg</item>
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
+        <item name="colorSecondaryContainer">@color/off_main_color</item>
+        <item name="colorOnSecondaryContainer">@color/bg</item>
+    </style>
+    <style name="myBottomNavActiveStyle" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:text">bold</item>
+        <item name="android:textColor">@color/fg</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="myDateTimePicker" parent="ThemeOverlay.MaterialComponents.MaterialCalendar">
+        <item name="android:windowFullscreen">false</item>
+        <item name="colorPrimary">@color/main_color</item>
+        <item name="colorOnPrimary">@color/bg</item>
+    </style>
+
+    <style name="myAlertDialogTheme" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <item name="buttonBarNegativeButtonStyle">@style/NegativeButtonStyle</item>
+        <item name="buttonBarPositiveButtonStyle">@style/PositiveButtonStyle</item>
+    </style>
+
+    <style name="NegativeButtonStyle" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/red</item>
+    </style>
+
+    <style name="PositiveButtonStyle" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/main_color</item>
+    </style>
+</resources>

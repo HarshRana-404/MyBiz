@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:cardCornerRadius="4dp"
+    app:cardUseCompatPadding="true"
+    android:background="@color/off_bg"
+    android:id="@+id/ll_sale_product"
+    android:clickable="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="4dp"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
+        android:weightSum="7"
+        android:gravity="center_vertical"
+        android:background="@color/off_bg"
+        >
+
+        <TextView
+            android:id="@+id/tv_product_index"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textAlignment="textStart"
+            android:textColor="@color/main_color"
+            android:text="Sr."
+            android:textSize="20sp"
+            android:layout_marginVertical="4dp"
+            android:layout_alignParentLeft="true"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:layout_weight="1"
+            android:layout_marginLeft="4dp"
+            />
+        <TextView
+            android:id="@+id/tv_sale_product_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textAlignment="textStart"
+            android:textColor="@color/fg"
+            android:text="Product name"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginVertical="4dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:layout_weight="3"
+            android:layout_marginHorizontal="2dp"
+            />
+        <TextView
+            android:id="@+id/tv_product_quantity"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textAlignment="textStart"
+            android:textColor="@color/fg"
+            android:text="Qty."
+            android:textSize="20sp"
+            android:layout_marginVertical="4dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="2dp"
+            />
+        <TextView
+            android:id="@+id/tv_product_total"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textColor="@color/fg"
+            android:text="₹ Amount"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:textAlignment="center"
+            android:layout_weight="2"
+            android:layout_marginHorizontal="2dp"
+            />
+    </LinearLayout>
+
+</LinearLayout>
