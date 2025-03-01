@@ -2,6 +2,8 @@ package com.harsh.mybiz.fragments
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -14,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.harsh.mybiz.R
+import com.harsh.mybiz.adapters.ProductAdapter
 import com.harsh.mybiz.adapters.StockAdapter
 import com.harsh.mybiz.fragments.SaleFragment.Companion.fabAddSale
 import com.harsh.mybiz.fragments.SaleFragment.Companion.rvExpandableSales
@@ -30,13 +33,16 @@ class StockFragment : Fragment() {
     lateinit var bsAddStockView: View
     lateinit var etStockName: EditText
     lateinit var etStockPrice: EditText
+    lateinit var etStockSearch: EditText
     lateinit var ibBSClose: ImageButton
     lateinit var btnAddStock: Button
     lateinit var stockName: String
     lateinit var stockPrice: String
+    lateinit var stockSearch: String
     lateinit var adapStock: StockAdapter
     val hmStock: HashMap<String, String> = HashMap<String, String>()
     val alStocks: ArrayList<StockModel> = ArrayList<StockModel>()
+    val alStockSearchResult: ArrayList<StockModel> = ArrayList<StockModel>()
 
     @SuppressLint("MissingInflatedId")
     override fun onCreateView(
@@ -46,18 +52,53 @@ class StockFragment : Fragment() {
         val fragStock : View = inflater.inflate(R.layout.fragment_stock, container, false)
 
         rvStock = fragStock.findViewById(R.id.rv_stock)
+        etStockSearch = fragStock.findViewById(R.id.et_search_stock)
         adapStock = StockAdapter(fragStock.context, alStocks)
         fabAddStock = fragStock.findViewById(R.id.fab_add_stock)
         rvStock.layoutManager = LinearLayoutManager(fragStock.context)
         rvStock.adapter = adapStock
         getStocks()
 
+        etStockSearch.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+
+            }
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+
+            }
+
+            @SuppressLint("NotifyDataSetChanged")
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                stockSearch = etStockSearch.text.toString()
+                if(!stockSearch.isEmpty()){
+                    try {
+                        alStockSearchResult.clear()
+                        for(product in alStocks){
+                            if(product.name.contains(stockSearch) || Constants.getDateToShow(product.date).contains(stockSearch)){
+                                alStockSearchResult.add(product)
+                            }
+                        }
+                        adapStock = StockAdapter(fragStock.context, alStockSearchResult)
+                        rvStock.adapter = adapStock
+                        adapStock.notifyDataSetChanged()
+                    }catch (ex: Exception){
+                        Constants.logThis(ex.toString())
+                    }
+                }else{
+                    adapStock = StockAdapter(fragStock.context, alStocks)
+                    rvStock.adapter = adapStock
+                    adapStock.notifyDataSetChanged()
+                }
+            }
+        })
+
         rvStock.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                     android.os.Handler().postDelayed(
-                        Runnable { fabAddSale.setVisibility(View.VISIBLE) },
+                        Runnable { fabAddStock.setVisibility(View.VISIBLE) },
                         1000
                     )
                 } else {

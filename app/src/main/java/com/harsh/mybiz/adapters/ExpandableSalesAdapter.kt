@@ -109,7 +109,7 @@ class ExpandableSalesAdapter(context: android.content.Context, alExpandableSale:
         }
 
         holder.cvExpandableSale.setOnLongClickListener(View.OnLongClickListener {
-            Constants.toastThis(context, "App will re-start in 20 seconds...")
+            Constants.toastThis(context, "App will re-start in 30 seconds...")
             isShared = true
             alShareSale.clear()
             val docDate = "sales_${Constants.getDocDateForExpandedSale(holder.tvSaleDate.text.toString())}"

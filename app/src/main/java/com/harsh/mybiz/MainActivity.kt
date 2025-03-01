@@ -85,7 +85,7 @@ class MainActivity : AppCompatActivity() {
                 }catch (ex : Exception){
                     Log.d("dalle", ex.toString())
                 }
-            }, 20000)
+            }, 30000)
         }
     }
 }

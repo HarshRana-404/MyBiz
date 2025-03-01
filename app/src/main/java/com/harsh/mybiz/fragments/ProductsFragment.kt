@@ -2,6 +2,8 @@ package com.harsh.mybiz.fragments
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -27,6 +29,7 @@ import com.harsh.mybiz.utilities.Constants
 
 class ProductsFragment : Fragment() {
     var alProducts: ArrayList<ProductModel> = ArrayList()
+    var alSearchResultProducts: ArrayList<ProductModel> = ArrayList()
     lateinit var rvProducts: RecyclerView
     lateinit var productsAdapter: ProductAdapter
     lateinit var fabAddProduct: FloatingActionButton
@@ -39,6 +42,8 @@ class ProductsFragment : Fragment() {
     lateinit var btnAddProduct: Button
     lateinit var productName: String
     lateinit var productPrice: String
+    lateinit var productSearch: String
+    lateinit var etProductSearch: EditText
 
     @SuppressLint("MissingInflatedId")
     override fun onCreateView(
@@ -50,11 +55,47 @@ class ProductsFragment : Fragment() {
         try{
             rvProducts = fragProducts.findViewById(R.id.rv_products)
             fabAddProduct = fragProducts.findViewById(R.id.fab_add_product)
+            etProductSearch = fragProducts.findViewById(R.id.et_search_product)
             rvProducts.layoutManager = LinearLayoutManager(fragProducts.context)
             productsAdapter = ProductAdapter(fragProducts.context, alProducts)
             rvProducts.adapter = productsAdapter
 
             getProducts()
+
+            etProductSearch.addTextChangedListener(object : TextWatcher {
+                override fun afterTextChanged(s: Editable?) {
+
+                }
+
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+
+                }
+
+                @SuppressLint("NotifyDataSetChanged")
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                    productSearch = etProductSearch.text.toString()
+                    if(!productSearch.isEmpty()){
+                        try {
+                            alSearchResultProducts.clear()
+                            for(product in alProducts){
+                                if(product.name.contains(productSearch)){
+                                    alSearchResultProducts.add(product)
+                                }
+                            }
+                            productsAdapter = ProductAdapter(fragProducts.context, alSearchResultProducts)
+                            rvProducts.adapter = productsAdapter
+                            productsAdapter.notifyDataSetChanged()
+                        }catch (ex: Exception){
+                            Constants.logThis(ex.toString())
+                        }
+                    }else{
+                        productsAdapter = ProductAdapter(fragProducts.context, alProducts)
+                        rvProducts.adapter = productsAdapter
+                        productsAdapter.notifyDataSetChanged()
+                    }
+                }
+            })
+
             rvProducts.addOnScrollListener(object : RecyclerView.OnScrollListener() {
                 override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                     super.onScrollStateChanged(recyclerView, newState)

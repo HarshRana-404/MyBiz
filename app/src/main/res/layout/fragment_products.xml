@@ -7,6 +7,20 @@
     tools:context=".fragments.ProductsFragment"
     android:padding="8dp">
 
+    <EditText
+        android:id="@+id/et_search_product"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/et_bg"
+        android:padding="16dp"
+        android:hint="Search"
+        android:elevation="4dp"
+        android:textSize="16sp"
+        android:drawableLeft="@drawable/ic_products"
+        android:drawablePadding="16dp"
+        android:layout_marginVertical="8dp"
+        android:inputType="textCapWords"
+        android:layout_below="@id/tv_title"/>
     <TextView
         android:id="@+id/tv_title"
         android:layout_width="match_parent"
@@ -25,7 +39,7 @@
         android:id="@+id/rv_products"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/tv_title"/>
+        android:layout_below="@id/et_search_product"/>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_add_product"
