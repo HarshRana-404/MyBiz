@@ -60,6 +60,7 @@ class LoginFragment : Fragment() {
                 try{
                     Constants.fbAuth.signInWithEmailAndPassword(email, password).addOnSuccessListener {
                         Toast.makeText(context, "Signed in successfully!", Toast.LENGTH_SHORT).show()
+                        Constants.uID = Constants.fbAuth.uid.toString()
                         startActivity(Intent(context, MainActivity::class.java))
                         activity?.finish()
                     }.addOnFailureListener(){

@@ -28,6 +28,7 @@ class AnalysisFragment : Fragment() {
     lateinit var tvMonthlySale: TextView
     lateinit var tvMonthlyStock: TextView
     lateinit var tvMostSoldProduct: TextView
+    lateinit var tvDailyAverage: TextView
     lateinit var tvSalesDates: TextView
     lateinit var tvSalesBetweenTotal: TextView
     lateinit var btnSalesBetweenDates: Button
@@ -53,6 +54,7 @@ class AnalysisFragment : Fragment() {
         tvMonthlySale = fragAnalysis.findViewById(R.id.tv_sale_monthly_value)
         tvMonthlyStock = fragAnalysis.findViewById(R.id.tv_stock_monthly_value)
         tvMostSoldProduct = fragAnalysis.findViewById(R.id.tv_most_selling_product)
+        tvDailyAverage = fragAnalysis.findViewById(R.id.tv_daily_average)
         tvSalesDates = fragAnalysis.findViewById(R.id.tv_sale_dates)
         tvSalesBetweenTotal = fragAnalysis.findViewById(R.id.tv_sale_between_total)
         btnSalesBetweenDates = fragAnalysis.findViewById(R.id.btn_sales_between_dates)
@@ -131,6 +133,9 @@ class AnalysisFragment : Fragment() {
                                     val quantity = saleOnDate.getString("quantity")!!.toInt()
                                     monthlySale += (price * quantity)
                                     tvMonthlySale.setText("₹ ${monthlySale.toString()}")
+                                    val s1 = Constants.getDateToShow(Constants.getDateTime())
+                                    val days = s1.split("-")
+                                    tvDailyAverage.setText("₹ ${monthlySale/Integer.parseInt(days[0])}")
                                 }
                             }
                         }

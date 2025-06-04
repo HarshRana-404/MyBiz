@@ -235,8 +235,9 @@ class ProfileFragment : Fragment() {
             var ad: AlertDialog = adb.create()
             adb.setPositiveButton("YES"){
                     dialog, which ->
-
                     Constants.fbAuth.signOut()
+                    Constants.uID=""
+                    SaleFragment.alExpandableSales.clear()
                     Constants.toastThis(fragProfile.context, "Logged out!")
                     startActivity(Intent(context, SplashActivity::class.java))
                     activity?.finish()

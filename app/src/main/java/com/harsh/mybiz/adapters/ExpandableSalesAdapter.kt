@@ -24,6 +24,7 @@ import com.harsh.mybiz.utilities.Constants
 class ExpandableSalesAdapter(context: android.content.Context, alExpandableSale: ArrayList<ExpandableSalesModel>) : RecyclerView.Adapter<ExpandableSalesAdapter.ViewHolder>() {
     companion object{
         var alProductsForSales = ArrayList<ProductModel>()
+        var alDatesTotal = ArrayList<ExpandableSalesModel>()
         val shareIntent = Intent(Intent.ACTION_SEND)
         var isShared = false
     }
@@ -109,8 +110,8 @@ class ExpandableSalesAdapter(context: android.content.Context, alExpandableSale:
         }
 
         holder.cvExpandableSale.setOnLongClickListener(View.OnLongClickListener {
-            Constants.toastThis(context, "App will re-start in 30 seconds...")
-            isShared = true
+//            Constants.toastThis(context, "App will re-start in 30 seconds...")
+//            isShared = true
             alShareSale.clear()
             val docDate = "sales_${Constants.getDocDateForExpandedSale(holder.tvSaleDate.text.toString())}"
             val qsSaleDocs = Constants.fbStore.collection("businesses").document(Constants.uID).collection("sales").document(docDate).collection("sales").get()
@@ -130,7 +131,30 @@ class ExpandableSalesAdapter(context: android.content.Context, alExpandableSale:
                     }
                     var shareSaleSubject: String = ""
                     var shareSaleBody: String = ""
+                    shareSaleBody = ""
+                    for(sale in alShareSale){
+                        shareSaleBody += "${sale.index}. ${sale.name} : ${sale.quantity} × ₹ ${sale.price} = ₹ ${(sale.price*sale.quantity)}\n\n"
+                    }
+                    var total = 0.0
+                    val qs = Constants.fbStore.collection("businesses").document(Constants.uID).get()
+                    qs.addOnSuccessListener {
+                        for(saleDate in alDatesTotal){
+                            Constants.logThis(Constants.getYearMonthForDatesTotal(alExpandableSale.get(position).date))
+                            if(Constants.getYearMonthForDatesTotal(alExpandableSale.get(position).date).equals(Constants.getYearMonthForDatesTotal(saleDate.date))){
+                                total+=saleDate.amount
+                            }
+                        }
+                        shareSaleSubject = qs.getResult().getString("name").toString()
+                        shareSaleSubject += " sale [${holder.tvSaleDate.text}] : [${holder.tvSaleAmount.text}]  monthly: [₹ ${total}]"
+                        shareIntent.setType("text/plain")
+                        shareIntent.putExtra(Intent.EXTRA_SUBJECT, shareSaleSubject)
+                        val shareMessage = shareSaleSubject +"\n\n" + shareSaleBody
+                        shareIntent.putExtra(Intent.EXTRA_TEXT, shareMessage.trim())
+                        context.startActivity(Intent.createChooser(shareIntent, "Share"))
+                    }
 
+//                    previously used logic which created multiple share intents...
+                    /*
                     val qs = Constants.fbStore.collection("businesses").document(Constants.uID).get()
                     qs.addOnSuccessListener {
                         try {
@@ -150,21 +174,26 @@ class ExpandableSalesAdapter(context: android.content.Context, alExpandableSale:
                                                             val price = pDetails.price.toDouble()
                                                             val quantity = saleOnDate.getString("quantity")!!.toInt()
                                                             monthlySale += (price * quantity)
-                                                            shareSaleSubject = qs.getResult().getString("name").toString()
-                                                            shareSaleSubject += " sale [${holder.tvSaleDate.text}] : [${holder.tvSaleAmount.text}]  monthly: [₹ ${monthlySale}]"
-                                                            shareSaleBody = ""
-                                                            for(sale in alShareSale){
-                                                                shareSaleBody += "${sale.index}. ${sale.name} : ${sale.quantity} × ₹ ${sale.price} = ₹ ${(sale.price*sale.quantity)}\n\n"
-                                                            }
+//                                                            shareSaleSubject = qs.getResult().getString("name").toString()
+//                                                            shareSaleSubject += " sale [${holder.tvSaleDate.text}] : [${holder.tvSaleAmount.text}]  monthly: [₹ ${monthlySale}]"
+//                                                            shareSaleBody = ""
+//                                                            for(sale in alShareSale){
+//                                                                shareSaleBody += "${sale.index}. ${sale.name} : ${sale.quantity} × ₹ ${sale.price} = ₹ ${(sale.price*sale.quantity)}\n\n"
+//                                                            }
+//                                                            shareIntent.setType("text/plain")
+//                                                            shareIntent.putExtra(Intent.EXTRA_SUBJECT, shareSaleSubject)
+//                                                            val shareMessage = shareSaleSubject +"\n\n" + shareSaleBody
+//                                                            shareIntent.putExtra(Intent.EXTRA_TEXT, shareMessage.trim())
+//                                                            context.startActivity(Intent.createChooser(shareIntent, "Share"))
                                                             break
                                                         }
                                                     }
                                                 }
-                                                shareIntent.setType("text/plain")
-                                                shareIntent.putExtra(Intent.EXTRA_SUBJECT, shareSaleSubject)
-                                                val shareMessage = shareSaleSubject +"\n\n" + shareSaleBody
-                                                shareIntent.putExtra(Intent.EXTRA_TEXT, shareMessage.trim())
-                                                context.startActivity(Intent.createChooser(shareIntent, "Share"))
+//                                                shareIntent.setType("text/plain")
+//                                                shareIntent.putExtra(Intent.EXTRA_SUBJECT, shareSaleSubject)
+//                                                val shareMessage = shareSaleSubject +"\n\n" + shareSaleBody
+//                                                shareIntent.putExtra(Intent.EXTRA_TEXT, shareMessage.trim())
+//                                                context.startActivity(Intent.createChooser(shareIntent, "Share"))
                                             }
                                         }
                                     }
@@ -176,7 +205,7 @@ class ExpandableSalesAdapter(context: android.content.Context, alExpandableSale:
                             Constants.logThis(ex.toString())
                         }
                     }
-
+                    */
                 } catch (ex: Exception) {
                     Constants.logThis(ex.toString())
                 }

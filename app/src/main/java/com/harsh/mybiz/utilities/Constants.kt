@@ -78,6 +78,12 @@ class Constants {
             val date : String = d[0] + "-" + d[1] + "-" + d[2]
             return date
         }
+        fun getYearMonthForDatesTotal(dateTime: String): String{
+            val dt = dateTime.split("sales_")
+            val d = dt[1].split("_")
+            val date : String = d[0]+ "-" + d[1]
+            return date
+        }
         fun getDateForSaleDocDB(dateTime: String): String{
             val dt = dateTime.split("@")
             val d = dt[0].split("-")

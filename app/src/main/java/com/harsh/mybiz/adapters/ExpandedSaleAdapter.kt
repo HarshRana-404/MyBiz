@@ -15,10 +15,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.harsh.mybiz.R
 import com.harsh.mybiz.fragments.SaleFragment
+import com.harsh.mybiz.models.ExpandableSalesModel
 import com.harsh.mybiz.models.ExpandedSaleModel
 import com.harsh.mybiz.utilities.Constants
 
 class ExpandedSaleAdapter(context: Context, alSales : ArrayList<ExpandedSaleModel>) : RecyclerView.Adapter<ExpandedSaleAdapter.ViewHolder>() {
+
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView){
         val llExpandedSale = itemView.findViewById<LinearLayout>(R.id.ll_sale_product)
         val tvProductIndex = itemView.findViewById<TextView>(R.id.tv_product_index)

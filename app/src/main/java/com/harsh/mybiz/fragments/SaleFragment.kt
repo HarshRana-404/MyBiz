@@ -21,6 +21,7 @@ import com.google.android.gms.tasks.Task
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.firestore.QuerySnapshot
 import com.harsh.mybiz.R
+import com.harsh.mybiz.adapters.ExpandedSaleAdapter
 import com.harsh.mybiz.models.ExpandableSalesModel
 import com.harsh.mybiz.models.ProductModel
 import com.harsh.mybiz.utilities.Constants
@@ -74,6 +75,7 @@ class SaleFragment : Fragment() {
                 getProductsForSales()
                 var total = 0.0
                 alExpandableSales.clear()
+                ExpandableSalesAdapter.alDatesTotal.clear()
 
                 var qs = Constants.fbStore.collection("businesses").document(Constants.uID).collection("sales").get()
                 qs.addOnSuccessListener {
@@ -95,6 +97,8 @@ class SaleFragment : Fragment() {
                                         }
                                     }
                                     alExpandableSales.add(ExpandableSalesModel(false, docDate, total))
+                                    ExpandableSalesAdapter.alDatesTotal.add(ExpandableSalesModel(false, docDate, total))
+                                    ExpandableSalesAdapter.alDatesTotal.sortWith(Comparator.comparing(ExpandableSalesModel::date).reversed())
                                     alExpandableSales.sortWith(Comparator.comparing(ExpandableSalesModel::date).reversed())
                                     for(i in 0..alExpandableSales.size-2){
                                         if(alExpandableSales.get(i).date.equals(alExpandableSales.get(i+1).date)){
