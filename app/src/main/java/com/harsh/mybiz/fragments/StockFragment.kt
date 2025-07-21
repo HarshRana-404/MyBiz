@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -33,6 +34,7 @@ class StockFragment : Fragment() {
     lateinit var bsAddStockView: View
     lateinit var etStockName: EditText
     lateinit var etStockPrice: EditText
+    lateinit var tvStockTitle: TextView
     lateinit var etStockSearch: EditText
     lateinit var ibBSClose: ImageButton
     lateinit var btnAddStock: Button
@@ -56,6 +58,7 @@ class StockFragment : Fragment() {
         adapStock = StockAdapter(fragStock.context, alStocks)
         fabAddStock = fragStock.findViewById(R.id.fab_add_stock)
         rvStock.layoutManager = LinearLayoutManager(fragStock.context)
+        tvStockTitle = fragStock.findViewById(R.id.tv_title)
         rvStock.adapter = adapStock
         getStocks()
 
@@ -68,7 +71,7 @@ class StockFragment : Fragment() {
 
             }
 
-            @SuppressLint("NotifyDataSetChanged")
+            @SuppressLint("NotifyDataSetChanged", "SetTextI18n")
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 stockSearch = etStockSearch.text.toString()
                 if(!stockSearch.isEmpty()){
@@ -82,10 +85,17 @@ class StockFragment : Fragment() {
                         adapStock = StockAdapter(fragStock.context, alStockSearchResult)
                         rvStock.adapter = adapStock
                         adapStock.notifyDataSetChanged()
+
+                        var stockTotal = 0.0;
+                        for(stock in alStockSearchResult){
+                            stockTotal += stock.price;
+                        }
+                        tvStockTitle.setText("Stock total: "+stockTotal)
                     }catch (ex: Exception){
                         Constants.logThis(ex.toString())
                     }
                 }else{
+                    tvStockTitle.setText("Stocks:")
                     adapStock = StockAdapter(fragStock.context, alStocks)
                     rvStock.adapter = adapStock
                     adapStock.notifyDataSetChanged()
@@ -143,7 +153,7 @@ class StockFragment : Fragment() {
 
         return fragStock
     }
-    @SuppressLint("NotifyDataSetChanged")
+    @SuppressLint("NotifyDataSetChanged", "SetTextI18n")
     fun getStocks(){
         alStocks.clear()
         val qs = Constants.fbStore.collection("businesses").document(Constants.uID).collection("stocks").get()
@@ -153,6 +163,11 @@ class StockFragment : Fragment() {
                 alStocks.add(StockModel(stock.getString("id").toString(), stock.getString("name").toString(), stock.getString("price")!!.toDouble(), stock.getString("date").toString(), stock.id))
             }
             alStocks.sortWith(Comparator.comparing(StockModel::date).reversed())
+//            var stockTotal = 0.0;
+//            for(stock in alStocks){
+//                stockTotal += stock.price;
+//            }
+//            tvStockTitle.setText("Stock total: "+stockTotal)
             adapStock.notifyDataSetChanged()
         }
     }

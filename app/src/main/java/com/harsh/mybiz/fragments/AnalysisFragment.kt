@@ -114,7 +114,7 @@ class AnalysisFragment : Fragment() {
             Constants.logThis(ex.toString())
         }
     }
-    @SuppressLint("SetTextI18n")
+    @SuppressLint("SetTextI18n", "DefaultLocale")
     fun loadData(){
         var monthlySale: Double = 0.0
         var monthlyStock: Double = 0.0
@@ -135,7 +135,7 @@ class AnalysisFragment : Fragment() {
                                     tvMonthlySale.setText("₹ ${monthlySale.toString()}")
                                     val s1 = Constants.getDateToShow(Constants.getDateTime())
                                     val days = s1.split("-")
-                                    tvDailyAverage.setText("₹ ${monthlySale/Integer.parseInt(days[0])}")
+                                    tvDailyAverage.setText("₹ ${String.format("%.2f", monthlySale/Integer.parseInt(days[0]))}")
                                 }
                             }
                         }
