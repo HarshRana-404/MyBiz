@@ -18,6 +18,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.tasks.Task
+import com.google.android.gms.tasks.Tasks
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.firestore.QuerySnapshot
 import com.harsh.mybiz.R
@@ -29,12 +30,12 @@ import com.pnpbook.adapters.ExpandableSalesAdapter
 import java.util.logging.Handler
 
 
+@SuppressLint("StaticFieldLeak")
 class SaleFragment : Fragment() {
-
-    @SuppressLint("StaticFieldLeak")
     companion object{
         lateinit var rvExpandableSales: RecyclerView
         lateinit var adapterExpandableSales: ExpandableSalesAdapter
+        lateinit var adapterProductsSpinner: ArrayAdapter<String>
         lateinit var bsAddToSale: BottomSheetDialog
         lateinit var bsAddToSaleView: View
         lateinit var spProducts: Spinner
@@ -72,7 +73,7 @@ class SaleFragment : Fragment() {
         fun getSales(){
             try{
                 getMonthlySaleAmount()
-                getProductsForSales()
+//                getProductsForSales()
                 var total = 0.0
                 alExpandableSales.clear()
                 ExpandableSalesAdapter.alDatesTotal.clear()
@@ -88,7 +89,7 @@ class SaleFragment : Fragment() {
                                     saleColDocs->
                                 try{
                                     for(sale in saleColDocs){
-                                        for(pDetails in alProductsForSales){
+                                        for(pDetails in Constants.alProductsOptimized){
                                             if(pDetails.id.equals(sale.getString("id"))){
                                                 val price = pDetails.price.toDouble()
                                                 val quantity = sale.getString("quantity")!!.toInt()
@@ -130,7 +131,7 @@ class SaleFragment : Fragment() {
                         qsSalesOnDate.addOnSuccessListener {
                                 saleDoc->
                             for(saleOnDate in saleDoc){
-                                for(pDetails in alProductsForSales){
+                                for(pDetails in Constants.alProductsOptimized){
                                     if(pDetails.id.equals(saleOnDate.getString("id"))){
                                         val price = pDetails.price.toDouble()
                                         val quantity = saleOnDate.getString("quantity")!!.toInt()
@@ -158,6 +159,7 @@ class SaleFragment : Fragment() {
         adapterExpandableSales = ExpandableSalesAdapter(fragSale.context, alExpandableSales)
         rvExpandableSales.adapter = adapterExpandableSales
 
+        getProductsOptimized()
         getSales()
 
         rvExpandableSales.addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -186,7 +188,8 @@ class SaleFragment : Fragment() {
             ibClose = bsAddToSaleView.findViewById(R.id.ib_bs_add_sale_close)
             btnAddToSale = bsAddToSaleView.findViewById(R.id.btn_bs_add_sale)
             tvTotalAmount = bsAddToSaleView.findViewById(R.id.tv_sale_total_amount)
-            getProducts()
+//            getProductsOptimized()
+            spProducts.adapter = adapterProductsSpinner
 
             ibClose.setOnClickListener(View.OnClickListener {
                 bsAddToSale.dismiss()
@@ -238,12 +241,12 @@ class SaleFragment : Fragment() {
 
                     var qsForProductName = Constants.fbStore.collection("businesses").document(Constants.uID).collection("products").whereEqualTo("name", spProducts.selectedItem.toString()).get()
                     qsForProductName.addOnSuccessListener {
-                        pDocuments->
+                            pDocuments->
                         if (pDocuments.size() == 1) {
                             val pId = pDocuments.documents.get(0).getString("id")
                             var qsForSale = Constants.fbStore.collection("businesses").document(Constants.uID).collection("sales").document("sales_${Constants.getDateForSaleDocDB(Constants.getDateTime())}").collection("sales").whereEqualTo("id", pId).get()
                             qsForSale.addOnSuccessListener {
-                                saleDocuments->
+                                    saleDocuments->
                                 if(saleDocuments.size()==1){
                                     try{
                                         var qty: Int = saleDocuments.documents.get(0).getString("quantity")!!.toInt()
@@ -306,8 +309,8 @@ class SaleFragment : Fragment() {
         qs.addOnSuccessListener{
                 documents->
             for(product in documents){
-                if(!product.getString("deleted").toBoolean()){
-                    alProducts.add(ProductModel(product.getString("id").toString(), product.getString("name").toString(), product.getString("price")!!.toDouble(), product.id, product.getString("deleted").toBoolean()))
+                alProducts.add(ProductModel(product.getString("id").toString(), product.getString("name").toString(), product.getString("price")!!.toDouble(), product.id, product.getString("deleted").toBoolean()))
+                if(!product.getString("deleted").toBoolean()) {
                     alProductNames.add(product.getString("name").toString())
                 }
             }
@@ -318,16 +321,47 @@ class SaleFragment : Fragment() {
             calculateTotal()
         }
     }
+    @SuppressLint("NotifyDataSetChanged")
+    fun getProductsOptimized(){
+        try{
+            if(Constants.alProductsOptimized.size>0){
+                return
+            }
+            Constants.alProductsOptimized.clear()
+            alProductNames.clear()
+            val qs: Task<QuerySnapshot> =  Constants.fbStore.collection("businesses").document(Constants.uID).collection("products").get()
+            qs.addOnSuccessListener{
+                    documents->
+                for(product in documents){
+                    Constants.alProductsOptimized.add(ProductModel(product.getString("id").toString(), product.getString("name").toString(), product.getString("price")!!.toDouble(), product.id, product.getString("deleted").toBoolean()))
+                    if(!product.getString("deleted").toBoolean()) {
+                        alProductNames.add(product.getString("name").toString())
+                    }
+                }
+                Constants.alProductsOptimized.sortWith(Comparator.comparing(ProductModel::name))
+                alProductNames.sort()
+                adapterProductsSpinner = ArrayAdapter(requireContext(), R.layout.product_sp_item_ui, R.id.tv_sp_item_product_name, alProductNames)
+                adapterProductsSpinner.notifyDataSetChanged()
+                calculateTotal()
+            }
+        }catch (ex: Exception){
+            Constants.logThis(ex.toString())
+        }
+    }
     @SuppressLint("SetTextI18n")
     fun calculateTotal(){
-        var price: Double = 0.0
-        var total: Double = 0.0
-        for(product in alProducts){
-            if(product.name.equals(spProducts.selectedItem.toString())){
-                price = product.price
+        try{
+            var price: Double = 0.0
+            var total: Double = 0.0
+            for(product in Constants.alProductsOptimized){
+                if(product.name.equals(spProducts.selectedItem.toString())){
+                    price = product.price
+                }
             }
+            total = qty * price
+            tvTotalAmount.setText("₹ $total")
+        }catch (ex: Exception){
+            Constants.logThis(ex.toString())
         }
-        total = qty * price
-        tvTotalAmount.setText("₹ $total")
     }
 }

@@ -6,6 +6,7 @@ import android.util.Log
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.harsh.mybiz.models.ProductModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.HashMap
@@ -15,6 +16,7 @@ import java.util.UUID
 
 class Constants {
     companion object{
+        var alProductsOptimized: ArrayList<ProductModel> = ArrayList()
         @SuppressLint("StaticFieldLeak")
         lateinit var fbStore : FirebaseFirestore
         lateinit var fbAuth : FirebaseAuth

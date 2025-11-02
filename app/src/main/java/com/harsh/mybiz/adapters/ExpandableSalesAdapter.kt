@@ -23,7 +23,6 @@ import com.harsh.mybiz.utilities.Constants
 
 class ExpandableSalesAdapter(context: android.content.Context, alExpandableSale: ArrayList<ExpandableSalesModel>) : RecyclerView.Adapter<ExpandableSalesAdapter.ViewHolder>() {
     companion object{
-        var alProductsForSales = ArrayList<ProductModel>()
         var alDatesTotal = ArrayList<ExpandableSalesModel>()
         val shareIntent = Intent(Intent.ACTION_SEND)
         var isShared = false
@@ -81,7 +80,7 @@ class ExpandableSalesAdapter(context: android.content.Context, alExpandableSale:
                     saleColDocs ->
                     try {
                         for (sale in saleColDocs) {
-                            for (pDetails in alProductsForSales) {
+                            for (pDetails in Constants.alProductsOptimized) {
                                 if (pDetails.id.equals(sale.getString("id"))) {
                                     val quantity = sale.getString("quantity")!!.toInt()
                                     alExpandedSale.add(ExpandedSaleModel(index, pDetails.id, pDetails.name, pDetails.price, quantity, Constants.getDocDateToShow(docDate), sale.id, pDetails.deleted))
@@ -120,7 +119,7 @@ class ExpandableSalesAdapter(context: android.content.Context, alExpandableSale:
                     saleColDocs ->
                 try {
                     for (sale in saleColDocs) {
-                        for (pDetails in alProductsForSales) {
+                        for (pDetails in Constants.alProductsOptimized) {
                             if (pDetails.id.equals(sale.getString("id"))) {
                                 val quantity = sale.getString("quantity")!!.toInt()
                                 alShareSale.add(ExpandedSaleModel(index, pDetails.id, pDetails.name, pDetails.price, quantity, Constants.getDocDateToShow(docDate), sale.id, pDetails.deleted))
@@ -220,12 +219,15 @@ class ExpandableSalesAdapter(context: android.content.Context, alExpandableSale:
     }
     fun getProductsForSales(){
         try{
-            alProductsForSales.clear()
+            if(Constants.alProductsOptimized.size>0){
+                return
+            }
+            Constants.alProductsOptimized.clear()
             val qs: Task<QuerySnapshot> =  Constants.fbStore.collection("businesses").document(Constants.uID).collection("products").get()
             qs.addOnSuccessListener{
                     documents->
                 for(product in documents){
-                    alProductsForSales.add(ProductModel(product.getString("id").toString(), product.getString("name").toString(), product.getString("price")!!.toDouble(), product.id, product.getString("deleted").toBoolean()))
+                    Constants.alProductsOptimized.add(ProductModel(product.getString("id").toString(), product.getString("name").toString(), product.getString("price")!!.toDouble(), product.id, product.getString("deleted").toBoolean()))
                 }
             }
         }catch (ex: Exception){

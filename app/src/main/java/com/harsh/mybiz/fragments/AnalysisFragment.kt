@@ -102,6 +102,10 @@ class AnalysisFragment : Fragment() {
 
     fun getProductsForSales(){
         try{
+            if(Constants.alProductsOptimized.size>0){
+                alProductsForSales = Constants.alProductsOptimized
+                return
+            }
             alProductsForSales.clear()
             val qs: Task<QuerySnapshot> =  Constants.fbStore.collection("businesses").document(Constants.uID).collection("products").get()
             qs.addOnSuccessListener{
