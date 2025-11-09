@@ -46,10 +46,14 @@ class ExpandableSalesAdapter(context: android.content.Context, alExpandableSale:
 
     @SuppressLint("SetTextI18n", "NotifyDataSetChanged")
     override fun onBindViewHolder(holder: ExpandableSalesAdapter.ViewHolder, position: Int) {
-        isShared = false
-        val expandableSale = alExpandableSale.get(position)
-        holder.tvSaleDate.setText(Constants.getDocDateToShow(expandableSale.date))
-        holder.tvSaleAmount.setText("₹ ${expandableSale.amount.toString()}")
+//        Previous code:
+//        isShared = false
+//        val expandableSale = alExpandableSale.get(position)
+//        holder.tvSaleDate.setText(Constants.getDocDateToShow(expandableSale.date))
+//        holder.tvSaleAmount.setText("₹ ${expandableSale.amount.toString()}")
+
+        val expandableSale = alExpandableSale[position]
+        Constants.logThis(expandableSale.toString())
         if(!expandableSale.expanded) {
             holder.ivExpand.rotation = 0.0F
             holder.rvExpandedSale.visibility = View.GONE
@@ -57,9 +61,19 @@ class ExpandableSalesAdapter(context: android.content.Context, alExpandableSale:
             holder.ivExpand.rotation = 180.0F
             holder.rvExpandedSale.visibility = View.VISIBLE
         }
+        holder.tvSaleDate.text = Constants.getDocDateToShow(expandableSale.date)
+        holder.tvSaleAmount.text = "₹ ${expandableSale.amount}"
+
+        holder.ivExpand.rotation = if (expandableSale.expanded) 180f else 0f
+        holder.rvExpandedSale.visibility = if (expandableSale.expanded) View.VISIBLE else View.GONE
+
         holder.cvExpandableSale.setOnClickListener {
-            if(!expandableSale.expanded) {
-                holder.rvExpandedSale.visibility = View.VISIBLE
+            val isExpanding = !expandableSale.expanded
+            expandableSale.expanded = isExpanding
+            holder.rvExpandedSale.adapter?.notifyDataSetChanged()
+
+            if (isExpanding) {
+                showExpandedSales(holder, expandableSale.date)
                 val animExpand = TranslateAnimation(0.0F, 0.0F, -200.0F, 0.0F)
                 val animToDown = RotateAnimation(0.0F, 180.0F, holder.ivExpand.pivotX, holder.ivExpand.pivotY)
                 animExpand.duration = 300
@@ -67,90 +81,119 @@ class ExpandableSalesAdapter(context: android.content.Context, alExpandableSale:
                 holder.ivExpand.startAnimation(animToDown)
                 animToDown.setFillEnabled(true)
                 animToDown.setFillAfter(true)
-                alExpandedSale.clear()
                 holder.rvExpandedSale.startAnimation(animExpand)
-                holder.rvExpandedSale.layoutManager = LinearLayoutManager(context)
-                val adapExpandedSale = ExpandedSaleAdapter(context, alExpandedSale)
-                holder.rvExpandedSale.adapter = adapExpandedSale
-                val docDate = "sales_${Constants.getDocDateForExpandedSale(holder.tvSaleDate.text.toString())}"
-                val qsSaleDocs = Constants.fbStore.collection("businesses").document(Constants.uID)
-                    .collection("sales").document(docDate).collection("sales").get()
-                var index = 1
-                qsSaleDocs.addOnSuccessListener {
-                    saleColDocs ->
-                    try {
-                        for (sale in saleColDocs) {
-                            for (pDetails in Constants.alProductsOptimized) {
-                                if (pDetails.id.equals(sale.getString("id"))) {
-                                    val quantity = sale.getString("quantity")!!.toInt()
-                                    alExpandedSale.add(ExpandedSaleModel(index, pDetails.id, pDetails.name, pDetails.price, quantity, Constants.getDocDateToShow(docDate), sale.id, pDetails.deleted))
-                                    index++
-                                    adapExpandedSale.notifyDataSetChanged()
-                                    break
-                                }
-                            }
-                        }
-                    } catch (ex: Exception) {
-                        Constants.logThis(ex.toString())
-                    }
-                }
-            }else{
-//                val animCollapse = TranslateAnimation(0.0F, 0.0F, 0.0F, -100.0F)
-//                animCollapse.duration = 200
-//                holder.rvExpandedSale.startAnimation(animCollapse)
+            } else {
+                holder.rvExpandedSale.visibility = View.GONE
                 val animToUp = RotateAnimation(180.0F, 0.0F, holder.ivExpand.pivotX, holder.ivExpand.pivotY)
                 animToUp.duration = 500
                 holder.ivExpand.startAnimation(animToUp)
                 holder.ivExpand.rotation = 360.0F
-                holder.rvExpandedSale.visibility = View.GONE
-                alExpandedSale.clear()
             }
-            alExpandableSale.get(position).expanded = !alExpandableSale.get(position).expanded
         }
 
-        holder.cvExpandableSale.setOnLongClickListener(View.OnLongClickListener {
+        holder.cvExpandableSale.setOnLongClickListener {
+            shareSales(holder, expandableSale.date, expandableSale.amount)
+            true
+        }
+
+//        Previous onClickListener
+//        holder.cvExpandableSale.setOnClickListener {
+//
+//            Previous code:
+//            if(!expandableSale.expanded) {
+//                holder.rvExpandedSale.visibility = View.VISIBLE
+//                val animExpand = TranslateAnimation(0.0F, 0.0F, -200.0F, 0.0F)
+//                val animToDown = RotateAnimation(0.0F, 180.0F, holder.ivExpand.pivotX, holder.ivExpand.pivotY)
+//                animExpand.duration = 300
+//                animToDown.duration = 500
+//                holder.ivExpand.startAnimation(animToDown)
+//                animToDown.setFillEnabled(true)
+//                animToDown.setFillAfter(true)
+//                alExpandedSale.clear()
+//                holder.rvExpandedSale.startAnimation(animExpand)
+//                holder.rvExpandedSale.layoutManager = LinearLayoutManager(context)
+//                val adapExpandedSale = ExpandedSaleAdapter(context, alExpandedSale)
+//                holder.rvExpandedSale.adapter = adapExpandedSale
+//                val docDate = "sales_${Constants.getDocDateForExpandedSale(holder.tvSaleDate.text.toString())}"
+//                val qsSaleDocs = Constants.fbStore.collection("businesses").document(Constants.uID)
+//                    .collection("sales").document(docDate).collection("sales").get()
+//                var index = 1
+//                qsSaleDocs.addOnSuccessListener {
+//                    saleColDocs ->
+//                    try {
+//                        for (sale in saleColDocs) {
+//                            for (pDetails in Constants.alProductsOptimized) {
+//                                if (pDetails.id.equals(sale.getString("id"))) {
+//                                    val quantity = sale.getString("quantity")!!.toInt()
+//                                    alExpandedSale.add(ExpandedSaleModel(index, pDetails.id, pDetails.name, pDetails.price, quantity, Constants.getDocDateToShow(docDate), sale.id, pDetails.deleted))
+//                                    index++
+//                                    adapExpandedSale.notifyDataSetChanged()
+//                                    break
+//                                }
+//                            }
+//                        }
+//                    } catch (ex: Exception) {
+//                        Constants.logThis(ex.toString())
+//                    }
+//                }
+//            }else{
+////                val animCollapse = TranslateAnimation(0.0F, 0.0F, 0.0F, -100.0F)
+////                animCollapse.duration = 200
+////                holder.rvExpandedSale.startAnimation(animCollapse)
+//                val animToUp = RotateAnimation(180.0F, 0.0F, holder.ivExpand.pivotX, holder.ivExpand.pivotY)
+//                animToUp.duration = 500
+//                holder.ivExpand.startAnimation(animToUp)
+//                holder.ivExpand.rotation = 360.0F
+//                holder.rvExpandedSale.visibility = View.GONE
+//                alExpandedSale.clear()
+//            }
+//            alExpandableSale.get(position).expanded = !alExpandableSale.get(position).expanded
+        }
+
+//        Previous onLongClickListener
+//        holder.cvExpandableSale.setOnLongClickListener(View.OnLongClickListener {
 //            Constants.toastThis(context, "App will re-start in 30 seconds...")
 //            isShared = true
-            alShareSale.clear()
-            val docDate = "sales_${Constants.getDocDateForExpandedSale(holder.tvSaleDate.text.toString())}"
-            val qsSaleDocs = Constants.fbStore.collection("businesses").document(Constants.uID).collection("sales").document(docDate).collection("sales").get()
-            var index = 1
-            qsSaleDocs.addOnSuccessListener {
-                    saleColDocs ->
-                try {
-                    for (sale in saleColDocs) {
-                        for (pDetails in Constants.alProductsOptimized) {
-                            if (pDetails.id.equals(sale.getString("id"))) {
-                                val quantity = sale.getString("quantity")!!.toInt()
-                                alShareSale.add(ExpandedSaleModel(index, pDetails.id, pDetails.name, pDetails.price, quantity, Constants.getDocDateToShow(docDate), sale.id, pDetails.deleted))
-                                index++
-                                break
-                            }
-                        }
-                    }
-                    var shareSaleSubject: String = ""
-                    var shareSaleBody: String = ""
-                    shareSaleBody = ""
-                    for(sale in alShareSale){
-                        shareSaleBody += "${sale.index}. ${sale.name} : ${sale.quantity} × ₹ ${sale.price} = ₹ ${(sale.price*sale.quantity)}\n\n"
-                    }
-                    var total = 0.0
-                    val qs = Constants.fbStore.collection("businesses").document(Constants.uID).get()
-                    qs.addOnSuccessListener {
-                        for(saleDate in alDatesTotal){
-                            Constants.logThis(Constants.getYearMonthForDatesTotal(alExpandableSale.get(position).date))
-                            if(Constants.getYearMonthForDatesTotal(alExpandableSale.get(position).date).equals(Constants.getYearMonthForDatesTotal(saleDate.date))){
-                                total+=saleDate.amount
-                            }
-                        }
-                        shareSaleSubject = qs.getResult().getString("name").toString()
-                        shareSaleSubject += " sale [${holder.tvSaleDate.text}] : [${holder.tvSaleAmount.text}]  monthly: [₹ ${total}]"
-                        shareIntent.setType("text/plain")
-                        shareIntent.putExtra(Intent.EXTRA_SUBJECT, shareSaleSubject)
-                        val shareMessage = shareSaleSubject +"\n\n" + shareSaleBody
-                        shareIntent.putExtra(Intent.EXTRA_TEXT, shareMessage.trim())
-                        context.startActivity(Intent.createChooser(shareIntent, "Share"))
-                    }
+//            alShareSale.clear()
+//            val docDate = "sales_${Constants.getDocDateForExpandedSale(holder.tvSaleDate.text.toString())}"
+//            val qsSaleDocs = Constants.fbStore.collection("businesses").document(Constants.uID).collection("sales").document(docDate).collection("sales").get()
+//            var index = 1
+//            qsSaleDocs.addOnSuccessListener {
+//                    saleColDocs ->
+//                try {
+//                    for (sale in saleColDocs) {
+//                        for (pDetails in Constants.alProductsOptimized) {
+//                            if (pDetails.id.equals(sale.getString("id"))) {
+//                                val quantity = sale.getString("quantity")!!.toInt()
+//                                alShareSale.add(ExpandedSaleModel(index, pDetails.id, pDetails.name, pDetails.price, quantity, Constants.getDocDateToShow(docDate), sale.id, pDetails.deleted))
+//                                index++
+//                                break
+//                            }
+//                        }
+//                    }
+//                    var shareSaleSubject: String = ""
+//                    var shareSaleBody: String = ""
+//                    shareSaleBody = ""
+//                    for(sale in alShareSale){
+//                        shareSaleBody += "${sale.index}. ${sale.name} : ${sale.quantity} × ₹ ${sale.price} = ₹ ${(sale.price*sale.quantity)}\n\n"
+//                    }
+//                    var total = 0.0
+//                    val qs = Constants.fbStore.collection("businesses").document(Constants.uID).get()
+//                    qs.addOnSuccessListener {
+//                        for(saleDate in alDatesTotal){
+//                            Constants.logThis(Constants.getYearMonthForDatesTotal(alExpandableSale.get(position).date))
+//                            if(Constants.getYearMonthForDatesTotal(alExpandableSale.get(position).date).equals(Constants.getYearMonthForDatesTotal(saleDate.date))){
+//                                total+=saleDate.amount
+//                            }
+//                        }
+//                        shareSaleSubject = qs.getResult().getString("name").toString()
+//                        shareSaleSubject += " sale [${holder.tvSaleDate.text}] : [${holder.tvSaleAmount.text}]  monthly: [₹ ${total}]"
+//                        shareIntent.setType("text/plain")
+//                        shareIntent.putExtra(Intent.EXTRA_SUBJECT, shareSaleSubject)
+//                        val shareMessage = shareSaleSubject +"\n\n" + shareSaleBody
+//                        shareIntent.putExtra(Intent.EXTRA_TEXT, shareMessage.trim())
+//                        context.startActivity(Intent.createChooser(shareIntent, "Share"))
+//                    }
 
 //                    previously used logic which created multiple share intents...
                     /*
@@ -205,13 +248,71 @@ class ExpandableSalesAdapter(context: android.content.Context, alExpandableSale:
                         }
                     }
                     */
-                } catch (ex: Exception) {
-                    Constants.logThis(ex.toString())
-                }
-            }
-            return@OnLongClickListener true
-        })
+//                } catch (ex: Exception) {
+//                    Constants.logThis(ex.toString())
+//                }
+//            }
+//            return@OnLongClickListener true
+//        })
 
+//    }
+
+    private fun showExpandedSales(holder: ViewHolder, date: String) {
+        val alExpandedSale = ArrayList<ExpandedSaleModel>()
+        val dateToMatch = date // e.g. "sales_2025-10-24"
+
+        // Filter sales from cached list
+        val daySales = Constants.alSalesCached.filter { it.date == dateToMatch }
+        var index = 1
+        for (sale in daySales) {
+            val product = Constants.alProductsOptimized.find { it.id == sale.productId } ?: continue
+            alExpandedSale.add(
+                ExpandedSaleModel(
+                    index++,
+                    product.id,
+                    product.name,
+                    product.price,
+                    sale.quantity,
+                    Constants.getDocDateToShow(dateToMatch),
+                    sale.productId,
+                    product.deleted
+                )
+            )
+        }
+
+        holder.rvExpandedSale.layoutManager = LinearLayoutManager(context)
+        val adapExpandedSale = ExpandedSaleAdapter(context, alExpandedSale)
+        holder.rvExpandedSale.adapter = adapExpandedSale
+        holder.rvExpandedSale.visibility = View.VISIBLE
+    }
+
+    private fun shareSales(holder: ViewHolder, date: String, totalAmount: Double) {
+        try {
+
+
+            val sales = Constants.alSalesCached.filter { it.date == date }
+            val sb = StringBuilder()
+            var index = 1
+            for (entry in sales) {
+                val product = Constants.alProductsOptimized.find { it.id == entry.productId } ?: continue
+                sb.append("${index++}. ${product.name} : ${entry.quantity} × ₹${product.price} = ₹${product.price * entry.quantity}\n\n")
+            }
+
+            val currentMonth = Constants.getYearMonthForDatesTotal(date)
+            val monthlyTotal = ExpandableSalesAdapter.alDatesTotal
+                .filter { Constants.getYearMonthForDatesTotal(it.date) == currentMonth }
+                .sumOf { it.amount }
+
+            val businessName = Constants.cachedBusinessName ?: "A MyBiz Business"
+            val subject = "$businessName sale [${Constants.getDocDateToShow(date)}] : [₹$totalAmount] monthly: [₹$monthlyTotal]"
+
+            shareIntent.type = "text/plain"
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, subject)
+            shareIntent.putExtra(Intent.EXTRA_TEXT, sb.toString().trim())
+            context.startActivity(Intent.createChooser(shareIntent, "Share"))
+        }catch (ex: Exception){
+            Constants.logThis(ex.toString())
+        }
     }
 
     override fun getItemCount(): Int {

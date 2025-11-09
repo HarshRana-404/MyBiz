@@ -80,6 +80,8 @@ class ProfileFragment : Fragment() {
                         val switchPassword = documents.documents.get(0).getString("password")
                         if (switchEmail != null && switchPassword != null) {
                             Constants.fbAuth.signInWithEmailAndPassword(switchEmail, switchPassword).addOnSuccessListener {
+                                Constants.alSalesCached.clear()
+                                Constants.cachedBusinessName=""
                                 Constants.alProductsOptimized.clear()
                                 fragProfile.context.startActivity(Intent(fragProfile.context, SplashActivity::class.java))
                             }
@@ -239,6 +241,8 @@ class ProfileFragment : Fragment() {
                     Constants.fbAuth.signOut()
                     Constants.uID=""
                     Constants.alProductsOptimized.clear()
+                    Constants.alSalesCached.clear()
+                    Constants.cachedBusinessName=""
                     SaleFragment.alExpandableSales.clear()
                     Constants.toastThis(fragProfile.context, "Logged out!")
                     startActivity(Intent(context, SplashActivity::class.java))

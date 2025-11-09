@@ -6,7 +6,10 @@ import android.util.Log
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.harsh.mybiz.models.ExpandableSalesModel
 import com.harsh.mybiz.models.ProductModel
+import com.harsh.mybiz.models.SaleEntryModel
+import com.harsh.mybiz.models.StockModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.HashMap
@@ -16,7 +19,13 @@ import java.util.UUID
 
 class Constants {
     companion object{
+//        Optimized & Sales
         var alProductsOptimized: ArrayList<ProductModel> = ArrayList()
+        val alSalesCached = mutableListOf<SaleEntryModel>()  // Flattened sales data
+//        val alExpandableSalesCached = mutableListOf<ExpandableSalesModel>() // Aggregated per day
+        var alStocksCached = ArrayList<StockModel>()
+        lateinit var cachedBusinessName : String
+
         @SuppressLint("StaticFieldLeak")
         lateinit var fbStore : FirebaseFirestore
         lateinit var fbAuth : FirebaseAuth
@@ -72,6 +81,18 @@ class Constants {
             val dt = dateTime.split("sales_")
             val d = dt[1].split("_")
             val date : String = d[2] + "-" + d[1] + "-" + d[0]
+            return date
+        }
+        fun getDateForYYYYMMDD(dateTime: String): String{
+            val dt = dateTime.split("sales_")
+            val d = dt[1].split("_")
+            val date : String = d[0] + "-" + d[1] + "-" + d[2]
+            return date
+        }
+        fun getDateForYearMonth(dateTime: String): String{
+            val dt = dateTime.split("sales_")
+            val d = dt[1].split("_")
+            val date : String = d[0] + "_" + d[1]
             return date
         }
         fun getDateForDB(dateTime: String): String{

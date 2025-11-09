@@ -43,19 +43,20 @@ class StockFragment : Fragment() {
     lateinit var stockSearch: String
     lateinit var adapStock: StockAdapter
     val hmStock: HashMap<String, String> = HashMap<String, String>()
-    val alStocks: ArrayList<StockModel> = ArrayList<StockModel>()
+
+    //    val alStocks: ArrayList<StockModel> = ArrayList<StockModel>()
     val alStockSearchResult: ArrayList<StockModel> = ArrayList<StockModel>()
 
-    @SuppressLint("MissingInflatedId")
+    @SuppressLint("MissingInflatedId", "NotifyDataSetChanged")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val fragStock : View = inflater.inflate(R.layout.fragment_stock, container, false)
+        val fragStock: View = inflater.inflate(R.layout.fragment_stock, container, false)
 
         rvStock = fragStock.findViewById(R.id.rv_stock)
         etStockSearch = fragStock.findViewById(R.id.et_search_stock)
-        adapStock = StockAdapter(fragStock.context, alStocks)
+        adapStock = StockAdapter(fragStock.context, Constants.alStocksCached)
         fabAddStock = fragStock.findViewById(R.id.fab_add_stock)
         rvStock.layoutManager = LinearLayoutManager(fragStock.context)
         tvStockTitle = fragStock.findViewById(R.id.tv_title)
@@ -74,11 +75,14 @@ class StockFragment : Fragment() {
             @SuppressLint("NotifyDataSetChanged", "SetTextI18n")
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 stockSearch = etStockSearch.text.toString()
-                if(!stockSearch.isEmpty()){
+                if (!stockSearch.isEmpty()) {
                     try {
                         alStockSearchResult.clear()
-                        for(product in alStocks){
-                            if(product.name.contains(stockSearch) || Constants.getDateToShow(product.date).contains(stockSearch)){
+                        for (product in Constants.alStocksCached) {
+                            if (product.name.contains(stockSearch) || Constants.getDateToShow(
+                                    product.date
+                                ).contains(stockSearch)
+                            ) {
                                 alStockSearchResult.add(product)
                             }
                         }
@@ -87,16 +91,16 @@ class StockFragment : Fragment() {
                         adapStock.notifyDataSetChanged()
 
                         var stockTotal = 0.0;
-                        for(stock in alStockSearchResult){
+                        for (stock in alStockSearchResult) {
                             stockTotal += stock.price;
                         }
-                        tvStockTitle.setText("Stock total: "+stockTotal)
-                    }catch (ex: Exception){
+                        tvStockTitle.setText("Stock total: " + stockTotal)
+                    } catch (ex: Exception) {
                         Constants.logThis(ex.toString())
                     }
-                }else{
+                } else {
                     tvStockTitle.setText("Stocks:")
-                    adapStock = StockAdapter(fragStock.context, alStocks)
+                    adapStock = StockAdapter(fragStock.context, Constants.alStocksCached)
                     rvStock.adapter = adapStock
                     adapStock.notifyDataSetChanged()
                 }
@@ -117,9 +121,10 @@ class StockFragment : Fragment() {
             }
         })
 
-        fabAddStock.setOnClickListener{
+        fabAddStock.setOnClickListener {
             bsAddStock = BottomSheetDialog(fragStock.context)
-            bsAddStockView = LayoutInflater.from(fragStock.context).inflate(R.layout.bottom_sheet_add_stock, null, false)
+            bsAddStockView = LayoutInflater.from(fragStock.context)
+                .inflate(R.layout.bottom_sheet_add_stock, null, false)
             bsAddStock.setContentView(bsAddStockView)
 
             etStockName = bsAddStockView.findViewById(R.id.et_bs_add_stock_name)
@@ -127,21 +132,42 @@ class StockFragment : Fragment() {
             btnAddStock = bsAddStockView.findViewById(R.id.btn_bs_add_stock)
             ibBSClose = bsAddStockView.findViewById(R.id.ib_bs_add_stock_close)
 
-            btnAddStock.setOnClickListener{
+            btnAddStock.setOnClickListener {
                 try {
                     stockName = etStockName.text.toString().trim()
                     stockPrice = etStockPrice.text.toString().trim()
-                    if(!stockName.isEmpty() && !stockPrice.isEmpty()){
+                    if (!stockName.isEmpty() && !stockPrice.isEmpty()) {
                         hmStock.put("id", Constants.getUUIDForText(stockName))
                         hmStock.put("name", stockName)
                         hmStock.put("price", stockPrice)
                         hmStock.put("date", Constants.getDateForDB(Constants.getDateTime()))
-                        Constants.fbStore.collection("businesses").document(Constants.uID).collection("stocks").document().set(hmStock).addOnSuccessListener {
+//                        Constants.fbStore.collection("businesses").document(Constants.uID)
+//                            .collection("stocks").document().set(hmStock).addOnSuccessListener {
+//                            getStocks()
+//                            bsAddStock.dismiss()
+//                        }
+                        val newStockRef =
+                            Constants.fbStore.collection("businesses").document(Constants.uID)
+                                .collection("stocks").document()
+                        val newDocumentId = newStockRef.id
+                        newStockRef.set(hmStock).addOnSuccessListener {
+                            // You can use newDocumentId here if needed
                             getStocks()
                             bsAddStock.dismiss()
                         }
+                        Constants.alStocksCached.add(
+                            StockModel(
+                                hmStock.get("id").toString(),
+                                hmStock.get("name").toString(),
+                                hmStock.get("price")!!.toDouble(),
+                                hmStock.get("date").toString(),
+                                newDocumentId
+                            )
+                        )
+                        Constants.alStocksCached.sortWith(Comparator.comparing(StockModel::date).reversed())
+                        adapStock.notifyDataSetChanged()
                     }
-                }catch (ex: Exception){
+                } catch (ex: Exception) {
                     Constants.logThis(ex.toString())
                 }
             }
@@ -153,22 +179,35 @@ class StockFragment : Fragment() {
 
         return fragStock
     }
+
     @SuppressLint("NotifyDataSetChanged", "SetTextI18n")
-    fun getStocks(){
-        alStocks.clear()
-        val qs = Constants.fbStore.collection("businesses").document(Constants.uID).collection("stocks").get()
-        qs.addOnSuccessListener {
-            documents->
-            for(stock in documents){
-                alStocks.add(StockModel(stock.getString("id").toString(), stock.getString("name").toString(), stock.getString("price")!!.toDouble(), stock.getString("date").toString(), stock.id))
-            }
-            alStocks.sortWith(Comparator.comparing(StockModel::date).reversed())
+    fun getStocks() {
+        if (Constants.alStocksCached.size > 0) {
+            return
+        } else {
+            Constants.alStocksCached.clear()
+            val qs = Constants.fbStore.collection("businesses").document(Constants.uID)
+                .collection("stocks").get()
+            qs.addOnSuccessListener { documents ->
+                for (stock in documents) {
+                    Constants.alStocksCached.add(
+                        StockModel(
+                            stock.getString("id").toString(),
+                            stock.getString("name").toString(),
+                            stock.getString("price")!!.toDouble(),
+                            stock.getString("date").toString(),
+                            stock.id
+                        )
+                    )
+                }
+                Constants.alStocksCached.sortWith(Comparator.comparing(StockModel::date).reversed())
 //            var stockTotal = 0.0;
 //            for(stock in alStocks){
 //                stockTotal += stock.price;
 //            }
 //            tvStockTitle.setText("Stock total: "+stockTotal)
-            adapStock.notifyDataSetChanged()
+                adapStock.notifyDataSetChanged()
+            }
         }
     }
 }
