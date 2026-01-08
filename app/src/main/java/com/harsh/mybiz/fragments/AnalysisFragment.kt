@@ -14,8 +14,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.harsh.mybiz.R
 import com.harsh.mybiz.adapters.SalesBetweenAdapter
+import com.harsh.mybiz.adapters.StocksBetweenAdapter
 import com.harsh.mybiz.models.ExpandedSaleModel
 import com.harsh.mybiz.models.ProductModel
+import com.harsh.mybiz.models.StockModel
 import com.harsh.mybiz.utilities.Constants
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -28,10 +30,17 @@ class AnalysisFragment : Fragment() {
     lateinit var tvMostSoldProduct: TextView
     lateinit var tvDailyAverage: TextView
     lateinit var tvSalesDates: TextView
+    lateinit var tvStockDates: TextView
+    lateinit var tvStockBetweenTotal: TextView
     lateinit var tvSalesBetweenTotal: TextView
     lateinit var btnSalesBetweenDates: Button
     lateinit var rvSalesBetween: RecyclerView
     lateinit var adapSalesBetween: SalesBetweenAdapter
+
+    var alStocksBetween = ArrayList<StockModel>()
+
+    lateinit var rvStockBetween: RecyclerView
+    lateinit var adapStockBetween: StocksBetweenAdapter
 
     var alSalesBetween = ArrayList<ExpandedSaleModel>()
     var hmProductQuantity = HashMap<String, Int>()
@@ -52,16 +61,26 @@ class AnalysisFragment : Fragment() {
         tvMostSoldProduct = v.findViewById(R.id.tv_most_selling_product)
         tvDailyAverage = v.findViewById(R.id.tv_daily_average)
         tvSalesDates = v.findViewById(R.id.tv_sale_dates)
+        tvStockDates = v.findViewById(R.id.tv_stock_dates)
+        tvStockBetweenTotal = v.findViewById(R.id.tv_stock_between_total)
         tvSalesBetweenTotal = v.findViewById(R.id.tv_sale_between_total)
         btnSalesBetweenDates = v.findViewById(R.id.btn_sales_between_dates)
         rvSalesBetween = v.findViewById(R.id.rv_sales_between_dates)
+        rvStockBetween = v.findViewById(R.id.rv_stock_between_dates)
 
         adapSalesBetween = SalesBetweenAdapter(requireContext(), alSalesBetween)
         rvSalesBetween.layoutManager = LinearLayoutManager(requireContext())
         rvSalesBetween.adapter = adapSalesBetween
 
+        adapStockBetween = StocksBetweenAdapter(requireContext(), alStocksBetween)
+        rvStockBetween.layoutManager = LinearLayoutManager(requireContext())
+        rvStockBetween.adapter = adapStockBetween
+
         tvSalesDates.visibility = View.GONE
         tvSalesBetweenTotal.visibility = View.GONE
+
+        tvStockDates.visibility = View.GONE
+        tvStockBetweenTotal.visibility = View.GONE
 
         loadOptimizedData()
 
@@ -132,6 +151,10 @@ class AnalysisFragment : Fragment() {
             tvSalesDates.visibility = View.VISIBLE
             tvSalesBetweenTotal.visibility = View.VISIBLE
 
+            tvStockDates.visibility = View.VISIBLE
+            tvStockBetweenTotal.visibility = View.VISIBLE
+
+
             startDateInMillis = it.first!!
             endDateInMillis = it.second!!
             startDate = convertDate(startDateInMillis)
@@ -173,6 +196,36 @@ class AnalysisFragment : Fragment() {
                 )
             )
         }
+
+        alStocksBetween.clear()
+        var stockTotal = 0.0
+        var stockIndex = 1
+        Constants.logThis(Constants.alStocksCached.get(0).date)
+//        return
+
+        Constants.alStocksCached
+            .filter { (it.date) in startDate..endDate }
+            .forEach { stock ->
+                stockTotal += stock.price
+
+                alStocksBetween.add(
+                    StockModel(
+                        id = stock.id,
+                        name = stock.name,
+                        price = stock.price,
+                        date = Constants.getDateToShow(stock.date),
+                        docId = stock.docId,
+                    )
+                )
+            }
+
+// If you have a TextView for stock total between dates
+        tvStockDates.text =
+            "Stock from ${Constants.getDateToShow("$startDate@")} to ${Constants.getDateToShow("$endDate@")}"
+
+        tvStockBetweenTotal.text = "₹ $stockTotal"
+
+        adapStockBetween.notifyDataSetChanged()
 
         tvSalesDates.text =
             "Sale from ${Constants.getDateToShow("$startDate@")} to ${Constants.getDateToShow("$endDate@")}"

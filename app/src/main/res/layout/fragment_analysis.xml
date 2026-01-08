@@ -43,7 +43,6 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         app:cardCornerRadius="8dp"
-                        android:layout_marginHorizontal="4dp"
                         app:cardElevation="4dp"
                         app:cardUseCompatPadding="true"
                         android:clickable="true">
@@ -86,7 +85,6 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         app:cardCornerRadius="8dp"
-                        android:layout_marginHorizontal="4dp"
                         app:cardElevation="4dp"
                         app:cardUseCompatPadding="true"
                         android:clickable="true">
@@ -143,7 +141,6 @@
                             app:cardCornerRadius="8dp"
                             app:cardElevation="4dp"
                             app:cardUseCompatPadding="true"
-                            android:layout_marginHorizontal="4dp"
                             android:clickable="true">
 
                             <LinearLayout
@@ -188,7 +185,6 @@
                             app:cardCornerRadius="8dp"
                             app:cardElevation="4dp"
                             app:cardUseCompatPadding="true"
-                            android:layout_marginHorizontal="4dp"
                             android:clickable="true">
 
                             <LinearLayout
@@ -238,7 +234,7 @@
                         android:layout_height="wrap_content"
                         android:background="@drawable/btn_bg"
                         android:textColor="@color/bg"
-                        android:text="Check sales between dates"
+                        android:text="Check sales &amp; Stock between dates"
                         android:textStyle="bold"
                         android:textSize="16sp"
                         android:layout_marginVertical="8dp"
@@ -265,6 +261,30 @@
                         android:layout_marginVertical="2dp"/>
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rv_sales_between_dates"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clickable="false"
+                        />
+                    <TextView
+                        android:id="@+id/tv_stock_dates"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textAlignment="center"
+                        android:textColor="@color/main_color"
+                        android:text="Stock between dates"
+                        android:textSize="16sp"
+                        android:layout_marginVertical="2dp"/>
+                    <TextView
+                        android:id="@+id/tv_stock_between_total"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textAlignment="center"
+                        android:textColor="@color/fg"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:layout_marginVertical="2dp"/>
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rv_stock_between_dates"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:clickable="false"
