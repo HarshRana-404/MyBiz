@@ -45,7 +45,7 @@ class ProductsFragment : Fragment() {
     lateinit var productSearch: String
     lateinit var etProductSearch: EditText
 
-    @SuppressLint("MissingInflatedId")
+    @SuppressLint("MissingInflatedId", "NotifyDataSetChanged")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -57,7 +57,10 @@ class ProductsFragment : Fragment() {
             fabAddProduct = fragProducts.findViewById(R.id.fab_add_product)
             etProductSearch = fragProducts.findViewById(R.id.et_search_product)
             rvProducts.layoutManager = LinearLayoutManager(fragProducts.context)
-            productsAdapter = ProductAdapter(fragProducts.context, Constants.alProductsOptimized)
+            val filteredProducts = ArrayList(
+                Constants.alProductsOptimized.filter { !it.deleted }
+            )
+            productsAdapter = ProductAdapter(fragProducts.context, filteredProducts)
             rvProducts.adapter = productsAdapter
 
             getProducts()
@@ -78,7 +81,7 @@ class ProductsFragment : Fragment() {
 
                 @SuppressLint("NotifyDataSetChanged")
                 override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                    productSearch = etProductSearch.text.toString()
+                    productSearch = etProductSearch.text.toString().toLowerCase()
                     if (!productSearch.isEmpty()) {
                         try {
                             alSearchResultProducts.clear()
@@ -155,12 +158,29 @@ class ProductsFragment : Fragment() {
                                 hmProduct.put("name", productName)
                                 hmProduct.put("price", productPrice)
                                 hmProduct.put("deleted", "false")
-                                Constants.fbStore.collection("businesses").document(Constants.uID)
-                                    .collection("products").document().set(hmProduct)
+                                val docRef = Constants.fbStore.collection("businesses")
+                                    .document(Constants.uID)
+                                    .collection("products")
+                                    .document()
+
+                                val docId = docRef.id
+
+                                docRef.set(hmProduct)
                                     .addOnSuccessListener {
-                                        bsAddProduct.dismiss()
+                                        val newProduct = ProductModel(
+                                            hmProduct["id"].toString(),
+                                            productName,
+                                            productPrice.toDouble(),
+                                            docId,
+                                            false
+                                        )
+                                        Constants.alProductsOptimized.add(newProduct)
+                                        filteredProducts.add(newProduct)
+                                        Constants.alProductsOptimized.sortBy { it.name }
+                                        productsAdapter.notifyDataSetChanged()
                                         Constants.toastThis(fragProducts.context, "Product Added!")
-                                        getProducts()
+                                        SaleFragment.forceReloadProducts = true
+                                        bsAddProduct.dismiss()
                                     }
                             } catch (ex: Exception) {
                             }
@@ -189,14 +209,14 @@ class ProductsFragment : Fragment() {
                     .collection("products").get()
             qs.addOnSuccessListener { documents ->
                 for (product in documents) {
-                    if (!product.getString("deleted").toBoolean()) {
+                    if (!(Constants.isDeleted(product))) {
                         Constants.alProductsOptimized.add(
                             ProductModel(
                                 product.getString("id").toString(),
                                 product.getString("name").toString(),
                                 product.getString("price")!!.toDouble(),
                                 product.id,
-                                product.getString("deleted").toBoolean()
+                                (Constants.isDeleted(product))
                             )
                         )
                     }

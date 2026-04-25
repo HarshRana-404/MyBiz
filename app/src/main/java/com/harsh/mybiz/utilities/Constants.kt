@@ -5,6 +5,7 @@ import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.harsh.mybiz.models.ExpandableSalesModel
 import com.harsh.mybiz.models.ProductModel
@@ -43,6 +44,15 @@ class Constants {
         }
         fun logThis(msg: String){
             Log.d("dalle", msg)
+        }
+        fun isDeleted(product: DocumentSnapshot): Boolean {
+            val value = product.get("deleted")
+
+            return when (value) {
+                is Boolean -> value
+                is String -> value.equals("true", ignoreCase = true)
+                else -> false
+            }
         }
         fun getDateTime(): String{
             val sdf: SimpleDateFormat = SimpleDateFormat("yyyy-MM-dd@HH:mm:ss", Locale.getDefault())

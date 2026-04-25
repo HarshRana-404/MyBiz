@@ -53,7 +53,6 @@ class ExpandableSalesAdapter(context: android.content.Context, alExpandableSale:
 //        holder.tvSaleAmount.setText("₹ ${expandableSale.amount.toString()}")
 
         val expandableSale = alExpandableSale[position]
-        Constants.logThis(expandableSale.toString())
         if(!expandableSale.expanded) {
             holder.ivExpand.rotation = 0.0F
             holder.rvExpandedSale.visibility = View.GONE
@@ -328,7 +327,7 @@ class ExpandableSalesAdapter(context: android.content.Context, alExpandableSale:
             qs.addOnSuccessListener{
                     documents->
                 for(product in documents){
-                    Constants.alProductsOptimized.add(ProductModel(product.getString("id").toString(), product.getString("name").toString(), product.getString("price")!!.toDouble(), product.id, product.getString("deleted").toBoolean()))
+                    Constants.alProductsOptimized.add(ProductModel(product.getString("id").toString(), product.getString("name").toString(), product.getString("price")!!.toDouble(), product.id, (Constants.isDeleted(product))))
                 }
             }
         }catch (ex: Exception){

@@ -74,7 +74,7 @@ class StockFragment : Fragment() {
 
             @SuppressLint("NotifyDataSetChanged", "SetTextI18n")
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                stockSearch = etStockSearch.text.toString()
+                stockSearch = etStockSearch.text.toString().toLowerCase()
                 if (!stockSearch.isEmpty()) {
                     try {
                         alStockSearchResult.clear()

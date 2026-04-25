@@ -90,13 +90,14 @@ class SplashActivity : AppCompatActivity() {
                     // Cache products
                     Constants.alProductsOptimized.clear()
                     for (doc in productsSnap) {
+                        Constants.logThis(doc.toString())
                         Constants.alProductsOptimized.add(
                             ProductModel(
                                 doc.getString("id").toString(),
                                 doc.getString("name").toString(),
                                 doc.getString("price")!!.toDouble(),
                                 doc.id,
-                                doc.getString("deleted").toBoolean()
+                                (Constants.isDeleted(doc))
                             )
                         )
                     }
@@ -134,11 +135,26 @@ class SplashActivity : AppCompatActivity() {
                         for ((i, saleSet) in allSales.withIndex()) {
                             val date = salesSnap.documents[i].id
                             for (sale in saleSet) {
+                                val rawQuantity = sale.get("quantity")
+                                val productId = sale.getString("id")
+
+                                val quantity = when (rawQuantity) {
+                                    is Long -> rawQuantity.toInt()
+                                    is Double -> rawQuantity.toInt()
+                                    is String -> rawQuantity.toIntOrNull()
+                                    else -> null
+                                }
+
+                                if (quantity == null || productId == null) {
+                                    Log.w("FIRESTORE_SKIP", "Skipping invalid sale: ${sale.id} → ${sale.data}")
+                                    continue
+                                }
+
                                 Constants.alSalesCached.add(
                                     SaleEntryModel(
                                         date = date,
-                                        productId = sale.getString("id").toString(),
-                                        quantity = sale.getString("quantity")!!.toInt()
+                                        productId = productId,
+                                        quantity = quantity
                                     )
                                 )
                             }

@@ -81,25 +81,25 @@ class ProductAdapter(context: Context, alProducts: ArrayList<ProductModel>) :
                     adb.setTitle("Delete?")
                     adb.setMessage("Are you sure you want to delete ${product.name}?")
                     var ad: AlertDialog = adb.create()
-
                     adb.setPositiveButton("YES") { dialog, which ->
                         try {
-                            Constants.fbStore.collection("businesses").document(Constants.uID)
-                                .collection("products").document(product.docId)
-                                .update("deleted", "true").addOnSuccessListener {
-                                Constants.toastThis(context, "Product deleted!")
-                                ad.dismiss()
-                                bsEditProduct.dismiss()
-                                SaleFragment.forceReloadProducts = true
-                                for (prod in Constants.alProductsOptimized) {
-                                    if (alProducts.get(position).id.equals(prod.id)) {
-                                        Constants.alProductsOptimized.remove(prod)
-                                        break
-                                    }
+                            Constants.fbStore.collection("businesses")
+                                .document(Constants.uID)
+                                .collection("products")
+                                .document(product.docId)
+                                .update("deleted", true)
+
+                                .addOnSuccessListener {
+
+                                    Constants.toastThis(context, "Product deleted!")
+                                    ad.dismiss()
+                                    bsEditProduct.dismiss()
+                                    SaleFragment.forceReloadProducts = true
+                                    alProducts.removeAt(position)
+                                    notifyItemRemoved(position)
+                                    Constants.alProductsOptimized.removeAll { it.id == product.id }
                                 }
-//                                alProducts.removeAt(position)
-                                notifyDataSetChanged()
-                            }
+
                         } catch (ex: Exception) {
                             Constants.logThis(ex.toString())
                         }

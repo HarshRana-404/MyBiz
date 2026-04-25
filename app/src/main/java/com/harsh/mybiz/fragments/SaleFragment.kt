@@ -75,7 +75,7 @@ class SaleFragment : Fragment() {
                                 product.getString("name").toString(),
                                 product.getString("price")!!.toDouble(),
                                 product.id,
-                                product.getString("deleted").toBoolean()
+                                (!Constants.isDeleted(product))
                             )
                         )
                     }
@@ -462,10 +462,10 @@ class SaleFragment : Fragment() {
                         product.getString("name").toString(),
                         product.getString("price")!!.toDouble(),
                         product.id,
-                        product.getString("deleted").toBoolean()
+                        (Constants.isDeleted(product))
                     )
                 )
-                if (!product.getString("deleted").toBoolean()) {
+                if (!(Constants.isDeleted(product))) {
                     alProductNames.add(product.getString("name").toString())
                 }
             }
@@ -521,10 +521,10 @@ class SaleFragment : Fragment() {
                             product.getString("name").toString(),
                             product.getString("price")!!.toDouble(),
                             product.id,
-                            product.getString("deleted").toBoolean()
+                            (Constants.isDeleted(product))
                         )
                     )
-                    if (!product.getString("deleted").toBoolean()) {
+                    if (!(Constants.isDeleted(product))) {
                         alProductNames.add(product.getString("name").toString())
                     }
                 }
