@@ -241,6 +241,15 @@
                         app:backgroundTint="@color/main_color"
                         android:elevation="4dp"
                         />
+
+                    <!-- Shown while fetching missing data from Firestore -->
+                    <ProgressBar
+                        android:id="@+id/pb_analysis"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginBottom="4dp"
+                        android:visibility="gone" />
                     <TextView
                         android:id="@+id/tv_sale_dates"
                         android:layout_width="match_parent"

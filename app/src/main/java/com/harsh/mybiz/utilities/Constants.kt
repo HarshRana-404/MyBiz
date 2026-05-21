@@ -27,6 +27,17 @@ class Constants {
         var alStocksCached = ArrayList<StockModel>()
         lateinit var cachedBusinessName : String
 
+        // Pagination state for sales
+        // Tracks the start of the oldest window already loaded (e.g. "sales_2025_01_01")
+        var salesPaginationCursor: String = ""
+        // True once we've loaded all the way back to the very first sale doc
+        var allSalesLoaded: Boolean = false
+
+        // Pagination state for stocks
+        // Stocks use a plain "YYYY-MM-DD" date field, cursor tracks oldest date loaded
+        var stocksPaginationCursor: String = ""
+        var allStocksLoaded: Boolean = false
+
         @SuppressLint("StaticFieldLeak")
         lateinit var fbStore : FirebaseFirestore
         lateinit var fbAuth : FirebaseAuth
@@ -129,6 +140,22 @@ class Constants {
             val date : String = d[2] + "_" + d[1] + "_" + d[0]
             return date
         }
+        /** Returns a sales doc-ID key like "sales_2025_01_15" from a Calendar instance */
+        fun calendarToSalesKey(cal: Calendar): String {
+            val y = cal.get(Calendar.YEAR)
+            val m = String.format("%02d", cal.get(Calendar.MONTH) + 1)
+            val d = String.format("%02d", cal.get(Calendar.DAY_OF_MONTH))
+            return "sales_${y}_${m}_${d}"
+        }
+
+        /** Returns a plain date string like "2025-01-15" from a Calendar instance (used for stocks) */
+        fun calendarToDateString(cal: Calendar): String {
+            val y = cal.get(Calendar.YEAR)
+            val m = String.format("%02d", cal.get(Calendar.MONTH) + 1)
+            val d = String.format("%02d", cal.get(Calendar.DAY_OF_MONTH))
+            return "$y-$m-$d"
+        }
+
         fun getUUIDForText(str: String):String{
             var uuid: UUID? = null
             try {
