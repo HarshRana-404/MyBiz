@@ -2,6 +2,8 @@ package com.harsh.mybiz.fragments
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import androidx.fragment.app.Fragment
@@ -11,7 +13,6 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
-import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -25,93 +26,78 @@ import com.harsh.mybiz.utilities.Constants
 
 class StockFragment : Fragment() {
 
-    lateinit var rvStock: RecyclerView
-    lateinit var fabAddStock: FloatingActionButton
-    lateinit var bsAddStock: BottomSheetDialog
-    lateinit var bsAddStockView: View
-    lateinit var etStockName: EditText
-    lateinit var etStockPrice: EditText
-    lateinit var tvStockTitle: TextView
-    lateinit var etStockSearch: EditText
-    lateinit var ibBSClose: ImageButton
-    lateinit var btnAddStock: Button
-    lateinit var btnLoadMore: Button
-    lateinit var pbLoadMore: ProgressBar
-    lateinit var stockName: String
-    lateinit var stockPrice: String
-    lateinit var stockSearch: String
-    lateinit var adapStock: StockAdapter
-    val hmStock: HashMap<String, String> = HashMap()
-    val alStockSearchResult: ArrayList<StockModel> = ArrayList()
+    private lateinit var rvStock: RecyclerView
+    private lateinit var fabAddStock: FloatingActionButton
+    private lateinit var tvStockTitle: TextView
+    private lateinit var etStockSearch: EditText
+    private lateinit var adapStock: StockAdapter
 
-    @SuppressLint("MissingInflatedId", "NotifyDataSetChanged")
+    // Debounce handler — waits 300ms after the user stops typing before filtering
+    private val searchHandler = Handler(Looper.getMainLooper())
+    private var searchRunnable: Runnable? = null
+
+    @SuppressLint("MissingInflatedId")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val fragStock: View = inflater.inflate(R.layout.fragment_stock, container, false)
 
-        rvStock       = fragStock.findViewById(R.id.rv_stock)
+        rvStock      = fragStock.findViewById(R.id.rv_stock)
         etStockSearch = fragStock.findViewById(R.id.et_search_stock)
-        fabAddStock   = fragStock.findViewById(R.id.fab_add_stock)
-        tvStockTitle  = fragStock.findViewById(R.id.tv_title)
-        btnLoadMore   = fragStock.findViewById(R.id.btn_load_more_stocks)
-        pbLoadMore    = fragStock.findViewById(R.id.pb_load_more_stocks)
+        fabAddStock  = fragStock.findViewById(R.id.fab_add_stock)
+        tvStockTitle = fragStock.findViewById(R.id.tv_title)
 
+        // Adapter owns the Load More button as a footer — no NestedScrollView needed
+        adapStock = StockAdapter(
+            context = fragStock.context,
+            alStocksMaster = Constants.alStocksCached,
+            onLoadMoreClick = { loadMoreStocks() }
+        )
         rvStock.layoutManager = LinearLayoutManager(fragStock.context)
-        adapStock = StockAdapter(fragStock.context, Constants.alStocksCached)
         rvStock.adapter = adapStock
 
         getStocks()
 
-        // Load More button — fetches the next 3-month window
-        btnLoadMore.setOnClickListener {
-            loadMoreStocks()
-        }
-
+        // ── Search with 300ms debounce ──────────────────────────────────────
         etStockSearch.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {}
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun afterTextChanged(s: Editable?) {}
 
-            @SuppressLint("NotifyDataSetChanged", "SetTextI18n")
+            @SuppressLint("SetTextI18n")
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                stockSearch = etStockSearch.text.toString().lowercase()
-                if (stockSearch.isNotEmpty()) {
-                    try {
-                        alStockSearchResult.clear()
-                        for (stock in Constants.alStocksCached) {
-                            if (stock.name.contains(stockSearch) ||
-                                Constants.getDateToShow(stock.date).contains(stockSearch)
-                            ) {
-                                alStockSearchResult.add(stock)
-                            }
-                        }
-                        adapStock = StockAdapter(fragStock.context, alStockSearchResult)
-                        rvStock.adapter = adapStock
-                        adapStock.notifyDataSetChanged()
+                // Cancel any pending search
+                searchRunnable?.let { searchHandler.removeCallbacks(it) }
 
-                        var stockTotal = 0.0
-                        for (stock in alStockSearchResult) stockTotal += stock.price
-                        tvStockTitle.text = "Stock total: $stockTotal"
-                    } catch (ex: Exception) {
-                        Constants.logThis(ex.toString())
+                searchRunnable = Runnable {
+                    val query = etStockSearch.text.toString().trim()
+                    adapStock.filter(query)
+
+                    if (query.isEmpty()) {
+                        tvStockTitle.text = "Stocks:"
+                    } else {
+                        // Calculate total from the filtered display — adapter exposes nothing,
+                        // so we compute it from the same filter logic here
+                        val total = Constants.alStocksCached
+                            .filter { stock ->
+                                stock.name.lowercase().contains(query.lowercase()) ||
+                                Constants.getDateToShow(stock.date).contains(query.lowercase())
+                            }
+                            .sumOf { it.price }
+                        tvStockTitle.text = "Stock total: $total"
                     }
-                } else {
-                    tvStockTitle.text = "Stocks:"
-                    adapStock = StockAdapter(fragStock.context, Constants.alStocksCached)
-                    rvStock.adapter = adapStock
-                    adapStock.notifyDataSetChanged()
                 }
+                searchHandler.postDelayed(searchRunnable!!, 300)
             }
         })
 
+        // ── FAB scroll hide/show ────────────────────────────────────────────
         rvStock.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    android.os.Handler().postDelayed(
-                        Runnable { fabAddStock.visibility = View.VISIBLE },
-                        1000
+                    Handler(Looper.getMainLooper()).postDelayed(
+                        { fabAddStock.visibility = View.VISIBLE }, 1000
                     )
                 } else {
                     fabAddStock.visibility = View.GONE
@@ -119,48 +105,55 @@ class StockFragment : Fragment() {
             }
         })
 
+        // ── Add stock FAB ───────────────────────────────────────────────────
         fabAddStock.setOnClickListener {
-            bsAddStock = BottomSheetDialog(fragStock.context)
-            bsAddStockView = LayoutInflater.from(fragStock.context)
+            val bsAddStock = BottomSheetDialog(fragStock.context)
+            val bsAddStockView = LayoutInflater.from(fragStock.context)
                 .inflate(R.layout.bottom_sheet_add_stock, null, false)
             bsAddStock.setContentView(bsAddStockView)
 
-            etStockName  = bsAddStockView.findViewById(R.id.et_bs_add_stock_name)
-            etStockPrice = bsAddStockView.findViewById(R.id.et_bs_add_stock_price)
-            btnAddStock  = bsAddStockView.findViewById(R.id.btn_bs_add_stock)
-            ibBSClose    = bsAddStockView.findViewById(R.id.ib_bs_add_stock_close)
+            val etStockName  = bsAddStockView.findViewById<EditText>(R.id.et_bs_add_stock_name)
+            val etStockPrice = bsAddStockView.findViewById<EditText>(R.id.et_bs_add_stock_price)
+            val btnAddStock  = bsAddStockView.findViewById<Button>(R.id.btn_bs_add_stock)
+            val ibBSClose    = bsAddStockView.findViewById<ImageButton>(R.id.ib_bs_add_stock_close)
 
             btnAddStock.setOnClickListener {
                 try {
-                    stockName  = etStockName.text.toString().trim()
-                    stockPrice = etStockPrice.text.toString().trim()
+                    val stockName  = etStockName.text.toString().trim()
+                    val stockPrice = etStockPrice.text.toString().trim()
                     if (stockName.isNotEmpty() && stockPrice.isNotEmpty()) {
-                        hmStock["id"]    = Constants.getUUIDForText(stockName)
-                        hmStock["name"]  = stockName
-                        hmStock["price"] = stockPrice
-                        hmStock["date"]  = Constants.getDateForDB(Constants.getDateTime())
+                        val hmStock = hashMapOf(
+                            "id"    to Constants.getUUIDForText(stockName),
+                            "name"  to stockName,
+                            "price" to stockPrice,
+                            "date"  to Constants.getDateForDB(Constants.getDateTime())
+                        )
 
                         val newStockRef = Constants.fbStore.collection("businesses")
                             .document(Constants.uID).collection("stocks").document()
-                        val newDocumentId = newStockRef.id
 
-                        newStockRef.set(hmStock).addOnSuccessListener {
-                            getStocks()
-                            bsAddStock.dismiss()
-                        }
-
-                        // Optimistic local update
-                        Constants.alStocksCached.add(
-                            StockModel(
-                                hmStock["id"].toString(),
-                                hmStock["name"].toString(),
-                                hmStock["price"]!!.toDouble(),
-                                hmStock["date"].toString(),
-                                newDocumentId
-                            )
+                        // Optimistic local update — add to cache and refresh adapter immediately
+                        // so the user sees the new item without waiting for Firestore
+                        val newStock = StockModel(
+                            hmStock["id"]!!,
+                            hmStock["name"]!!,
+                            hmStock["price"]!!.toDouble(),
+                            hmStock["date"]!!,
+                            newStockRef.id
                         )
+                        Constants.alStocksCached.add(newStock)
                         Constants.alStocksCached.sortWith(Comparator.comparing(StockModel::date).reversed())
-                        adapStock.notifyDataSetChanged()
+                        adapStock.refreshFromMaster()
+
+                        bsAddStock.dismiss()
+
+                        // Write to Firestore in the background
+                        newStockRef.set(hmStock).addOnFailureListener {
+                            // Rollback on failure
+                            Constants.alStocksCached.remove(newStock)
+                            adapStock.refreshFromMaster()
+                            Constants.toastThis(fragStock.context, "Failed to save stock. Please retry.")
+                        }
                     }
                 } catch (ex: Exception) {
                     Constants.logThis(ex.toString())
@@ -174,45 +167,46 @@ class StockFragment : Fragment() {
         return fragStock
     }
 
-    @SuppressLint("NotifyDataSetChanged")
-    fun getStocks() {
+    override fun onDestroyView() {
+        super.onDestroyView()
+        // Cancel any pending search callbacks to avoid leaks
+        searchRunnable?.let { searchHandler.removeCallbacks(it) }
+    }
+
+    // ── Data loading ────────────────────────────────────────────────────────
+
+    private fun getStocks() {
         if (Constants.alStocksCached.isNotEmpty()) {
-            // Already have data — just refresh the adapter and show/hide Load More
-            adapStock.notifyDataSetChanged()
-            updateLoadMoreVisibility()
+            adapStock.refreshFromMaster()
+            updateLoadMoreState()
             return
         }
-        // Nothing cached yet — do the initial paginated load
         Constants.allStocksLoaded = false
+        adapStock.isLoading = true
         SplashActivity.preloadStocks {
-            adapStock.notifyDataSetChanged()
-            updateLoadMoreVisibility()
+            adapStock.isLoading = false
+            adapStock.refreshFromMaster()
+            updateLoadMoreState()
         }
     }
 
-    @SuppressLint("NotifyDataSetChanged")
     private fun loadMoreStocks() {
         if (Constants.allStocksLoaded) {
-            updateLoadMoreVisibility()
+            updateLoadMoreState()
             return
         }
-        pbLoadMore.visibility  = View.VISIBLE
-        btnLoadMore.visibility = View.GONE
+        adapStock.isLoading    = true
+        adapStock.showLoadMore = false
 
         SplashActivity.loadMoreStocks {
-            adapStock.notifyDataSetChanged()
-            pbLoadMore.visibility = View.GONE
-            updateLoadMoreVisibility()
+            adapStock.isLoading = false
+            adapStock.refreshFromMaster()
+            updateLoadMoreState()
         }
     }
 
-    private fun updateLoadMoreVisibility() {
-        if (Constants.allStocksLoaded) {
-            btnLoadMore.visibility = View.GONE
-            pbLoadMore.visibility  = View.GONE
-        } else {
-            btnLoadMore.visibility = View.VISIBLE
-            pbLoadMore.visibility  = View.GONE
-        }
+    private fun updateLoadMoreState() {
+        adapStock.showLoadMore = !Constants.allStocksLoaded
+        adapStock.isLoading    = false
     }
 }

@@ -34,50 +34,16 @@
         android:inputType="textCapWords"
         android:layout_below="@id/tv_title" />
 
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/nsv_stock"
+    <!--
+        RecyclerView fills the remaining space directly — NO NestedScrollView wrapper.
+        NestedScrollView forces RecyclerView to measure all items at once (defeats recycling).
+        The "Load More" button and ProgressBar are added as a footer item inside the adapter.
+    -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_stock"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/et_search_stock">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rv_stock"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false" />
-
-            <ProgressBar
-                android:id="@+id/pb_load_more_stocks"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                android:visibility="gone"
-                android:indeterminateTint="@color/main_color"/>
-
-            <Button
-                android:id="@+id/btn_load_more_stocks"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="72dp"
-                android:layout_marginHorizontal="8dp"
-                android:text="Load More"
-                android:textSize="16sp"
-                app:backgroundTint="@color/main_color"
-                android:background="@drawable/btn_bg"
-                android:visibility="gone" />
-
-        </LinearLayout>
-
-    </androidx.core.widget.NestedScrollView>
+        android:layout_below="@id/et_search_stock" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_add_stock"
